@@ -81,15 +81,24 @@ const element_types = {
 	next: {color: "#a0f0c080", radius: 6, crosshair: 9},
 	nearest: {color: "#aaaa2280", radius: 3.5, crosshair: 0},
 };
-let highlight_t_value = 0.0, minimum_curve_radius = 0.0;
+let highlight_curve = 0, highlight_t_value = 0.0, minimum_curve_radius = 0.0;
 let animating = 0, animation_timer = null;
 on("click", "#toggle_animation", () => {
 	animating = !animating;
 	if (animating && !state.shownearest) DOM("[data-kwd=shownearest]").click(); //eh whatever
+	if (animating && !highlight_curve) {highlight_curve = 1; highlight_t_value = 0;}
 	if (animating) animation_timer = setInterval(() => {
 		highlight_t_value += animating / RESOLUTION;
-		if (highlight_t_value > 1.0) {animating = -1; highlight_t_value = 2 - highlight_t_value;}
-		if (highlight_t_value < 0.0) {animating = +1; highlight_t_value = 0 - highlight_t_value;}
+		if (highlight_t_value > 1.0) {
+			if (highlight_curve === curves.length - 1) {animating = -1; highlight_t_value = 2 - highlight_t_value;}
+			else {++highlight_curve; highlight_t_value -= 1.0;}
+		}
+		if (highlight_t_value < 0.0) {
+			//NOTE: We don't animate the start node, which is a single point and not very pretty.
+			if (highlight_curve < 1) highlight_curve = 1;
+			if (highlight_curve === 1) {animating = 1; highlight_t_value = 0 - highlight_t_value;}
+			else {--highlight_curve; highlight_t_value += 1.0;}
+		}
 		repaint();
 	}, 10);
 	else clearInterval(animation_timer);
@@ -219,8 +228,8 @@ function repaint() {
 		ctx.stroke(path);
 		ctx.restore();
 	});
-	const points = get_curve_points(1); //HACK
 	if (state.shownearest) {
+		const points = get_curve_points(highlight_curve);
 		//Highlight a point near to the mouse cursor
 		const t = highlight_t_value, curve_at_t = interpolate(points, highlight_t_value);
 		if (state.shownearestlines) {
@@ -414,14 +423,19 @@ canvas.addEventListener("pointermove", e => {
 		canvas.style.cursor = "pointer";
 	else canvas.style.cursor = null;
 	if (state.shownearest && !animating) {
-		const points = get_curve_points(1);
-		let best = 0.0, bestdist = -1;
-		for (let t = 0; t <= 1; t += 1/RESOLUTION) {
-			const p = interpolate(points, t);
-			const dist = (p.x - e.offsetX) ** 2 + (p.y - e.offsetY) ** 2;
-			if (bestdist < 0 || dist < bestdist) {bestdist = dist; best = t;}
-		}
-		highlight_t_value = best;
+		let bestdist = -1;
+		curves.forEach((c, i) => {
+			const points = get_curve_points(i);
+			for (let t = 0; t <= 1; t += 1/RESOLUTION) {
+				const p = interpolate(points, t);
+				const dist = (p.x - e.offsetX) ** 2 + (p.y - e.offsetY) ** 2;
+				if (bestdist < 0 || dist < bestdist) {
+					bestdist = dist;
+					highlight_curve = i;
+					highlight_t_value = t;
+				}
+			}
+		});
 		repaint();
 	}
 });
