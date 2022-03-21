@@ -45,9 +45,9 @@ const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
 const curves = [
 	{degree: 1, points: [{x: 500, y: 400}]},
-	/*{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
+	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
 	{degree: 1, points: [{x: 450, y: 450}]},
-	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},*/
+	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},
 ];
 let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
 function rebuild_elements() {
