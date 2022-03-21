@@ -294,7 +294,7 @@ function repaint() {
 			}
 			derivdesc.push("and zero.");
 			const d1 = derivs[0], d2 = derivs[1];
-			const k = (d1.x * d2.y - d1.y * d2.x) / (d1.x ** 2 + d1.y ** 2) ** 1.5;
+			const k = d1 && d2 && ((d1.x * d2.y - d1.y * d2.x) / (d1.x ** 2 + d1.y ** 2) ** 1.5);
 			if (k) {
 				const radius = 1 / k;
 				derivdesc.push(" Curve radius is ", SPAN({style: "color: rebeccapurple"}, radius.toFixed(3)));
