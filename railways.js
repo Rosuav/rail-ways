@@ -357,7 +357,35 @@ function repaint() {
 		ctx.stroke(path);
 		ctx.restore();
 	}
-	if (dragging) draw_at(ctx, dragging); //Anything being dragged gets drawn last, ensuring it is at the top of z-order.
+	if (dragging) { //Anything being dragged gets drawn last, ensuring it is at the top of z-order.
+		let curve = -1;
+		if (dragging.type === "start" || dragging.type === "end" || dragging.type === "next")
+			//While dragging a node, draw the lines to its associated control points.
+			curve = dragging.curve;
+		else if (dragging.type === "control")
+			//Similarly, when dragging a control point, draw lines to the connected node.
+			curve = dragging.curve - !dragging.index;
+		if (curve >= 0) {
+			ctx.save();
+			const c = curves[curve];
+			const path = new Path2D; //I should be able to draw directly, without a Path, but whatever.
+			if (c.points.length > 1)
+				//This is the end of a curve, so connect to the last control point.
+				path.moveTo(c.points[1].x, c.points[1].y);
+			else path.moveTo(c.x, c.y);
+			const next = curves[curve + 1];
+			if (next && next.points.length > 1)
+				//This is the start of a curve. Ditto, the first control point of the next curve.
+				path.lineTo(next.points[0].x, next.points[0].y);
+			else if (c.points.length > 1)
+				path.lineTo(c.points[2].x, c.points[2].y);
+			//Else neither of them has anything, so no line needed.
+			ctx.strokeStyle = "#888";
+			ctx.stroke(path);
+			ctx.restore();
+		}
+		draw_at(ctx, dragging);
+	}
 	ctx.restore();
 }
 
