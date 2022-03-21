@@ -44,7 +44,8 @@ const ctx = canvas.getContext('2d');
 const curves = [
 	{degree: 1, points: [{x: 500, y: 400}]},
 	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
-	{degree: 3, points: [{x: 450, y: 450}, {x: 50, y: 400}, {x: 50, y: 50}]},
+	{degree: 1, points: [{x: 450, y: 450}]},
+	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},
 ];
 let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
 function rebuild_elements() {
@@ -472,7 +473,10 @@ function update_element_position(el, x, y) {
 			if (!other) break; //eg dragging the last control point on the last node
 			if (other.points.length === 1) {
 				//We're dragging a control point opposite a line. Lock this point
-				//to being inline with the previous line.
+				//to being inline with the previous line. That means that the triple
+				//of [other, curves[el.curve], el] needs to be colinear (if first
+				//control point - otherwise [el, curves[el.curve], el], but that's
+				//effectively the same thing anyway).
 				if (el.curve === 1) break; //Immediately after the start node, we have full freedom.
 				//TODO.
 			}
