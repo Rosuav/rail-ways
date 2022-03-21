@@ -2,6 +2,8 @@
 
 * Restrict everything to cubic curves or straight lines, thus simplifying the code
 * Different colours for different types of markers
+
+Straight sections may be more trouble than they're worth. Maybe disallow??
 */
 import choc, {set_content, DOM, on} from "https://rosuav.github.io/shed/chocfactory.js";
 const {BUTTON, INPUT, LABEL, SPAN} = choc; //autoimport
