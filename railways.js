@@ -594,7 +594,7 @@ canvas.addEventListener("pointerup", e => {
 });
 
 DOM("#canvasborder").addEventListener("wheel", e => {
-	console.log(e);
+	//console.log(e);
 	if (e.ctrlKey || e.shiftKey) {
 		e.preventDefault();
 		if (e.shiftKey) zoomlevel += e.wheelDelta / 5; //Ctrl-Shift (or just Shift) for finer scroll zoom
@@ -649,7 +649,6 @@ set_content("#actions", [
 
 on("change", "#uploadjson", async e => {
 	for (let f of e.match.files) {
-		console.log(f);
 		try {
 			const data = JSON.parse(await f.text());
 			if (typeof data !== "object" || !Array.isArray(data.origin) || !Array.isArray(data.curves)) continue;
@@ -661,6 +660,7 @@ on("change", "#uploadjson", async e => {
 				curves.push({degree: c.length, points: c.map(p => ({x: p[0], y: p[1]}))});
 			});
 			rebuild_elements();
+			calc_min_curve_radius();
 			repaint();
 			break;
 		}
