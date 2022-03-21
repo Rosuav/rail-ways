@@ -41,19 +41,44 @@ on("click", "#options input", e => {
 
 const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
-const elements = [
-	{type: "start", x: 500, y: 400},
-	{type: "control", x: 600, y: 500},
-	{type: "control", x: 450, y: 550},
-	/*{type: "next", x: 450, y: 500},
-	{type: "control", x: 450, y: 200},
-	{type: "control", x: 50, y: 400},*/
-	{type: "end", x: 50, y: 50},
+const curves = [
+	{degree: 1, points: [{x: 500, y: 400}]},
+	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
+	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},
 ];
+let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
+function rebuild_elements() {
+	const el = [];
+	let x, y;
+	curves.forEach((c,i) => {
+		//assert c.degree === c.points.length
+		//assert c.degree === 1 || c.degree === 3 //we support only cubic curves here
+		if (!i) {
+			//Start node is special: it is, effectively, a zero-length line segment.
+			//Yaknow, a point.
+			//assert c.degree === 1
+			x = c.points[0].x; y = c.points[0].y;
+		}
+		c.x = x; c.y = y;
+		c.points.forEach(p => {
+			p.type = "control";
+			p.curve = i; //Cross-reference points back to their curves
+			el.push(p);
+		});
+		const p = c.points[c.points.length - 1];
+		//Differentiate intersection nodes from the beginning and end of track, for
+		//the sake of the visuals
+		p.type = !i ? "start" : i === curves.length - 1 ? "end" : "next";
+	});
+	console.log(el);
+	elements = el;
+}
+rebuild_elements();
 const element_types = {
 	start: {color: "#a0f0c080", radius: 6, crosshair: 9},
-	control: {color: "#a0f0c080", radius: 6, crosshair: 9},
+	control: {color: "#66339980", radius: 6, crosshair: 9},
 	end: {color: "#a0f0c080", radius: 6, crosshair: 9},
+	next: {color: "#a0f0c080", radius: 6, crosshair: 9},
 	nearest: {color: "#aaaa2280", radius: 3.5, crosshair: 0},
 };
 let highlight_t_value = 0.0, minimum_curve_radius = 0.0;
