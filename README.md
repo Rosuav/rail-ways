@@ -14,14 +14,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 * Upload background image
 * Pan/zoom (native size == image size)
 * Stroke width (in pixels)
-* Splines: multiple cubic Bezier curves, chained, all inline control points
-  - Have a simple UI to "add curve"
-    - Measure delta-x, delta-y from point prior to "end" to "end" itself
-    - Replace the current "end" with "next"
-    - Append control point end+dx, end+dy
-    - Append control point end+dx*2, end+dy*2
-    - Append end point end+dx*3, end+dy*3
-  - Also: "add line". Exactly as above but zero control points.
 * Show direction of travel somewhere (maybe the Next marker needs an orientation?)
 * Import/export JSON
 * List (maybe drop-down) of all points
