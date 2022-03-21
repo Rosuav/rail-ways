@@ -473,22 +473,44 @@ function update_element_position(el, x, y) {
 			//Possibility 2: The other curve is cubic Bezier
 			const other = curves[el.curve + (el.index ? 1 : -1)];
 			if (!other) break; //eg dragging the last control point on the last node
+			//If we're index 0 (first point), our reference point is the start of the
+			//current curve; otherwise, our reference is the start of the next curve.
+			const origin = curves[el.curve + el.index];
 			if (other.points.length === 1) {
 				//We're dragging a control point opposite a line. Lock this point
 				//to being inline with the previous line. That means that the triple
 				//of [other, curves[el.curve], el] needs to be colinear (if first
-				//control point - otherwise [el, curves[el.curve], el], but that's
+				//control point - otherwise [el, curves[el.curve], other], but that's
 				//effectively the same thing anyway).
-				if (el.curve === 1) break; //Immediately after the start node, we have full freedom.
-				//TODO.
+				if (el.curve === 1 && !el.index) break; //Immediately after the start node, we have full freedom.
+				//Dragging the first control point references the origin of the next line;
+				//dragging the second references the destination of the previous line.
+				const counterpart = el.index ? other.points[0] : other;
+				const x1 = origin.x - counterpart.x, y1 = origin.y - counterpart.y;
+				const angle1 = Math.atan2(y1, x1);
+				//Ensure that the current point remains in the same line.
+				//Project the current point onto the same line by calculating the dot product.
+				//Everything seems to say that the projection is simply x1*x2+y1*y2, but this
+				//always gives me a result that's wrong by a factor of the length of the
+				//counterpart-origin vector. I'm not sure whether it's my understanding of the
+				//dot product, my implementation here, or something else, that has the flaw,
+				//but the upshot is that we can calculate this by just dividing through by
+				//the Pythagorean length.
+				const x2 = el.x - origin.x, y2 = el.y - origin.y;
+				//Calculate with trignometry
+				//const angle2 = Math.atan2(y2, x2);
+				//const length = Math.sqrt(x2*x2 + y2*y2) * Math.cos(angle2 - angle1);
+				//Calculate directly with the rectangular coordinates
+				const length2 = (x1 * x2 + y1 * y2) / Math.sqrt(x1*x1 + y1*y1);
+				//Based on this length, pick a desired target location.
+				const len = Math.max(length2, 1.0); //Never go backwards; for convenience, always have the control point a little ahead.
+				el.x = origin.x + len * Math.cos(angle1);
+				el.y = origin.y + len * Math.sin(angle1);
 			}
 			else {
 				//We're dragging a control point opposite another curve. Follow the
 				//movement with the final control point of the other curve.
 				const counterpart = other.points[0|!el.index];
-				//If we're index 0 (first point), our reference point is the start of the
-				//current curve; otherwise, our reference is the start of the next curve.
-				const origin = curves[el.curve + el.index];
 				counterpart.x = 2 * origin.x - el.x;
 				counterpart.y = 2 * origin.y - el.y;
 			}
