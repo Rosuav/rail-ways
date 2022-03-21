@@ -23,7 +23,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
     - Append end point end+dx*3, end+dy*3
   - Also: "add line". Exactly as above but zero control points.
 * Show direction of travel somewhere (maybe the Next marker needs an orientation?)
-* Link Next to the control points before and after it
 * Automatic symmetry
   - When you drag a point immediately before a Next node, also correspondingly move
     the point immediately after the Next node, and vice versa.

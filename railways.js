@@ -425,11 +425,27 @@ canvas.addEventListener("pointerdown", e => {
 	dragging = el; dragbasex = e.offsetX - el.x; dragbasey = e.offsetY - el.y;
 });
 
+function update_element_position(el, x, y) {
+	const dx = x - el.x, dy = y - el.y;
+	[el.x, el.y] = [x, y];
+	//Update whatever else needs to be updated.
+	//1) If you dragged the endpoint of a curve, update the origin of the next curve.
+	if (el.type === "next" || el.type === "start") {
+		const c = curves[el.curve + 1];
+		c.x = x; c.y = y;
+	}
+	//2) If you drag the start, it magically starts at that point. This is a consequence
+	//of the "start curve" being a special case point, not actually a line.
+	if (el.type === "start") {
+		curves[0].x = x; curves[0].y = y;
+	}
+	calc_min_curve_radius();
+	repaint();
+}
+
 canvas.addEventListener("pointermove", e => {
 	if (dragging) {
-		[dragging.x, dragging.y] = [e.offsetX - dragbasex, e.offsetY - dragbasey];
-		calc_min_curve_radius();
-		repaint();
+		update_element_position(dragging, e.offsetX - dragbasex, e.offsetY - dragbasey);
 		canvas.style.cursor = "pointer";
 	}
 	else if (element_at_position(e.offsetX, e.offsetY, el => !el.fixed))
@@ -456,10 +472,8 @@ canvas.addEventListener("pointermove", e => {
 canvas.addEventListener("pointerup", e => {
 	if (!dragging) return;
 	e.target.releasePointerCapture(e.pointerId);
-	[dragging.x, dragging.y] = [e.offsetX - dragbasex, e.offsetY - dragbasey];
-	dragging = null;
-	calc_min_curve_radius();
-	repaint();
+	const el = dragging; dragging = null;
+	update_element_position(el, e.offsetX - dragbasex, e.offsetY - dragbasey);
 });
 
 DOM("#canvasborder").addEventListener("wheel", e => {
