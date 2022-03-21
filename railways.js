@@ -44,7 +44,7 @@ const ctx = canvas.getContext('2d');
 const curves = [
 	{degree: 1, points: [{x: 500, y: 400}]},
 	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
-	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},
+	{degree: 3, points: [{x: 450, y: 450}, {x: 50, y: 400}, {x: 50, y: 50}]},
 ];
 let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
 function rebuild_elements() {
@@ -60,8 +60,9 @@ function rebuild_elements() {
 			x = c.points[0].x; y = c.points[0].y;
 		}
 		c.x = x; c.y = y;
-		c.points.forEach(p => {
+		c.points.forEach((p,n) => {
 			p.type = "control";
+			p.index = n; //Let each control point know whether it's the first one or not
 			p.curve = i; //Cross-reference points back to their curves
 			el.push(p);
 		});
@@ -459,6 +460,32 @@ function update_element_position(el, x, y) {
 				}
 			}
 			break;
+		}
+		case "control": {
+			//Mirror the change on the opposite side control point
+			//There are, broadly speaking, two possibilities, in two forms:
+			//1) We're dragging the first control point - look at the previous curve
+			//2) We're dragging the second control point - look at the next curve
+			//Possibility 1: The other curve is a line
+			//Possibility 2: The other curve is cubic Bezier
+			const other = curves[el.curve + (el.index ? 1 : -1)];
+			if (!other) break; //eg dragging the last control point on the last node
+			if (other.points.length === 1) {
+				//We're dragging a control point opposite a line. Lock this point
+				//to being inline with the previous line.
+				if (el.curve === 1) break; //Immediately after the start node, we have full freedom.
+				//TODO.
+			}
+			else {
+				//We're dragging a control point opposite another curve. Follow the
+				//movement with the final control point of the other curve.
+				const counterpart = other.points[0|!el.index];
+				//If we're index 0 (first point), our reference point is the start of the
+				//current curve; otherwise, our reference is the start of the next curve.
+				const origin = curves[el.curve + el.index];
+				counterpart.x = 2 * origin.x - el.x;
+				counterpart.y = 2 * origin.y - el.y;
+			}
 		}
 		default: break;
 	}
