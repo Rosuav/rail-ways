@@ -81,7 +81,8 @@ const element_types = {
 	next: {color: "#a0f0c080", radius: 6, crosshair: 9},
 	nearest: {color: "#aaaa2280", radius: 3.5, crosshair: 0},
 };
-let highlight_curve = 0, highlight_t_value = 0.0, minimum_curve_radius = 0.0;
+let highlight_curve = 0, highlight_t_value = 0.0;
+let tightest_curve = 0, minimum_curve_radius = 0.0;
 let animating = 0, animation_timer = null;
 on("click", "#toggle_animation", () => {
 	animating = !animating;
@@ -196,13 +197,12 @@ function signed_curvature(t, deriv1, deriv2) {
 	return (d1.x * d2.y - d1.y * d2.x) / (d1.x ** 2 + d1.y ** 2) ** 1.5 * 2/3;
 }
 
-function curvature(curve, t, deriv1, deriv2) {
+function curvature(curve, t) {
 	//Calculate curvature (often denoted Kappa), which we can depict
-	//as 1/r for the osculating circle. If the curve derivatives are
-	//precalculated, pass them, otherwise uses the elements list.
-	if (!deriv1) deriv1 = curve_derivative(get_curve_points(curve));
+	//as 1/r for the osculating circle.
+	const deriv1 = curve_derivative(get_curve_points(curve));
 	if (deriv1.length < 2) return 0; //Lines don't have curvature.
-	if (!deriv2) deriv2 = curve_derivative(deriv1);
+	const deriv2 = curve_derivative(deriv1);
 	return Math.abs(signed_curvature(t, deriv1, deriv2));
 }
 
@@ -327,9 +327,10 @@ function repaint() {
 	set_content("#minimum_curve_radius", [
 		"Minimum curve radius for this curve is: ",
 		SPAN({style: "display: none"}, "at t=" + minimum_curve_radius + " "), //Currently not shown
-		SPAN("" + (1/curvature(1, minimum_curve_radius)).toFixed(3)),
+		SPAN("" + (1/curvature(tightest_curve, minimum_curve_radius)).toFixed(3)),
 	]);
-	if (state.showminimum && points.length > 2) {
+	if (state.showminimum) {
+		const points = get_curve_points(tightest_curve);
 		const deriv1 = curve_derivative(points);
 		const deriv2 = curve_derivative(deriv1);
 		const radius = 1 / signed_curvature(minimum_curve_radius, deriv1, deriv2);
@@ -355,24 +356,25 @@ function repaint() {
 	ctx.restore();
 }
 
-function calc_min_curve_radius() {
+function find_min_curve_radius(points) {
 	//Calculate the minimum curve radius and the t-value at which that occurs.
 	//Note that, since this uses sampling rather than truly solving the equation,
 	//it may not give the precise minimum in situations where there are two local
 	//minima that are comparably close. It'll show the other one though.
-	const deriv1 = curve_derivative(get_curve_points(1));
+	//Returns [Kappa, t] for the point of greatest (absolute) curvature.
+	const deriv1 = curve_derivative(points);
 	if (deriv1.length < 2) {minimum_curve_radius = 0.0; return;} //Lines aren't curved.
 	const deriv2 = curve_derivative(deriv1);
 	let best = 0.0, curve = 0;
 	const probe_span = 8/RESOLUTION; //Start by jumping every eighth spot, as defined by the mouse cursor nearest calculation
 	for (let t = 0; t <= 1; t += probe_span) {
-		const k = curvature(1, t, deriv1, deriv2);
+		const k = Math.abs(signed_curvature(t, deriv1, deriv2));
 		if (k > curve) {curve = k; best = t;}
 	}
 	//const probed_best = best, probed_curve = curve;
 	let earlier = best - probe_span, later = best + probe_span;
-	let earlier_curve = curvature(1, earlier, deriv1, deriv2);
-	let later_curve = curvature(1, later, deriv1, deriv2);
+	let earlier_curve = Math.abs(signed_curvature(earlier, deriv1, deriv2));
+	let later_curve = Math.abs(signed_curvature(later, deriv1, deriv2));
 	const epsilon = 1/16384;
 	while (later - earlier > epsilon) {
 		//We now have three points [earlier, best, later],
@@ -386,10 +388,21 @@ function calc_min_curve_radius() {
 			later_curve = curve;
 		}
 		best = (earlier + later) / 2;
-		curve = curvature(1, best, deriv1, deriv2);
+		curve = Math.abs(signed_curvature(best, deriv1, deriv2));
 	}
-	minimum_curve_radius = best;
-	//console.log("Probed:", probed_best, " Refined:", best);
+	return [curve, best];
+}
+function calc_min_curve_radius() {
+	let tightest = 0;
+	curves.forEach((c, i) => {
+		if (c.points.length === 1) return;
+		const [k, t] = find_min_curve_radius(get_curve_points(i));
+		if (k > tightest) {
+			tightest_curve = i;
+			minimum_curve_radius = t;
+			tightest = k;
+		}
+	});
 }
 calc_min_curve_radius();
 repaint();
