@@ -69,8 +69,8 @@ function rebuild_elements() {
 		//Differentiate intersection nodes from the beginning and end of track, for
 		//the sake of the visuals
 		p.type = !i ? "start" : i === curves.length - 1 ? "end" : "next";
+		x = p.x; y = p.y; //Daisy-chain the next curve onto this one.
 	});
-	console.log(el);
 	elements = el;
 }
 rebuild_elements();
