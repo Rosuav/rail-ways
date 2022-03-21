@@ -430,7 +430,8 @@ canvas.addEventListener("pointerdown", e => {
 	dragging = el; dragbasex = e.offsetX - el.x; dragbasey = e.offsetY - el.y;
 });
 
-function update_element_position(el, x, y) {
+function update_element_position(el, x, y, adjust) {
+	if (adjust) {x += el.x; y += el.y;} //Adjustment: provide dx,dy instead of x,y
 	const dx = x - el.x, dy = y - el.y;
 	[el.x, el.y] = [x, y];
 	//Update whatever else needs to be updated.
@@ -449,17 +450,29 @@ function update_element_position(el, x, y) {
 				//Assuming that these are cubic curves, the final control point
 				//is the second control point. We could also identify it as the
 				//-2th point, but that's not as clean in JS anyway.
-				c.points[1].x += dx;
-				c.points[1].y += dy;
+				update_element_position(c.points[1], dx, dy, 1);
+			}
+			else {
+				const prev = curves[el.curve - 1];
+				if (prev && prev.points.length > 1)
+					update_element_position(prev.points[1], 0, 0, 1);
 			}
 			const next = curves[el.curve + 1];
+			console.log(c.points.length, next ? next.points.length : "(no next)");
 			if (next) {
 				//There's no next on the end node.
 				next.x = x; next.y = y;
 				if (next.points.length > 1) {
 					//Carry the first control point of the following curve too.
-					next.points[0].x += dx;
-					next.points[0].y += dy;
+					update_element_position(next.points[0], dx, dy, 1);
+				}
+				else {
+					//We're dragging a node that is followed by a line.
+					//If it's followed by a curve after that, poke the first control
+					//point of that curve, to validate colinearity.
+					const nextnext = curves[el.curve + 2];
+					if (nextnext && nextnext.points.length > 1)
+						update_element_position(nextnext.points[0], 0, 0, 1);
 				}
 			}
 			break;
@@ -517,8 +530,7 @@ function update_element_position(el, x, y) {
 		}
 		default: break;
 	}
-	calc_min_curve_radius();
-	repaint();
+	if (!adjust) {calc_min_curve_radius(); repaint();}
 }
 
 canvas.addEventListener("pointermove", e => {
