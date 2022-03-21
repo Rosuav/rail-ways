@@ -6,7 +6,7 @@
 Straight sections may be more trouble than they're worth. Maybe disallow??
 */
 import choc, {set_content, DOM, on} from "https://rosuav.github.io/shed/chocfactory.js";
-const {BUTTON, INPUT, LABEL, SPAN} = choc; //autoimport
+const {A, BUTTON, INPUT, LABEL, SPAN} = choc; //autoimport
 
 const RESOLUTION = 256; //Spread this many points across the curve to do our calculations
 
@@ -602,4 +602,41 @@ set_content("#actions", [
 	}],
 	["Add line", () => add_curve(1)],
 	["Add curve", () => add_curve(3)],
+	["Export", () => {
+		const data = ["{\n",
+			'\t"origin": ' + JSON.stringify([curves[0].points[0].x, curves[0].points[0].y]) + ",\n",
+			'\t"curves": [\n',
+		];
+		curves.forEach((c,i) => i && data.push("\t\t" + JSON.stringify(c.points.map(p => [p.x, p.y])) + ",\n"));
+		data[data.length - 1] = data[data.length - 1].replace(",\n", "\n"); //Remove the comma from the last one, because JSON
+		data.push("\t]\n", "}\n");
+		const blob = new Blob(data, {type: "application/json"});
+		const url = URL.createObjectURL(blob);
+		//TODO: Allow paths to have names, and then include the name in the export
+		A({href: url, download: "railways-export.json"}).click();
+		setTimeout(() => URL.revokeObjectURL(url), 60000); //Dispose of the blob after a minute - it should have finished by then
+	}],
+	["Import", () => DOM("#uploadjson").click()],
 ].map(a => BUTTON({onclick: a[1]}, a[0])));
+
+on("change", "#uploadjson", async e => {
+	for (let f of e.match.files) {
+		console.log(f);
+		try {
+			const data = JSON.parse(await f.text());
+			if (typeof data !== "object" || !Array.isArray(data.origin) || !Array.isArray(data.curves)) continue;
+			curves.length = 1;
+			const origin = curves[0].points[0];
+			[origin.x, origin.y] = data.origin;
+			data.curves.forEach(c => {
+				if (!Array.isArray(c) || (c.length !== 1 && c.length !== 3)) return;
+				curves.push({degree: c.length, points: c.map(p => ({x: p[0], y: p[1]}))});
+			});
+			rebuild_elements();
+			repaint();
+			break;
+		}
+		catch (e) { } //TODO: If all files fail, report failure (there'll usually only be one anyway)
+	}
+	DOM("#uploadjson").value = "";
+});

@@ -15,7 +15,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 * Pan/zoom (native size == image size)
 * Stroke width (in pixels)
 * Show direction of travel somewhere (maybe the Next marker needs an orientation?)
-* Import/export JSON
 * List (maybe drop-down) of all points
   - Show info about point when selected, and highlight it
   - Change selection in drop-down when point clicked on
