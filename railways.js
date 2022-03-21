@@ -45,9 +45,9 @@ const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
 const curves = [
 	{degree: 1, points: [{x: 500, y: 400}]},
-	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
+	/*{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
 	{degree: 1, points: [{x: 450, y: 450}]},
-	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},
+	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},*/
 ];
 let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
 function rebuild_elements() {
@@ -425,7 +425,6 @@ canvas.addEventListener("pointerdown", e => {
 	dragging = null;
 	let el = element_at_position(e.offsetX, e.offsetY, el => !el.fixed);
 	if (!el) return;
-	console.log("Dragging", el);
 	e.target.setPointerCapture(e.pointerId);
 	dragging = el; dragbasex = e.offsetX - el.x; dragbasey = e.offsetY - el.y;
 });
@@ -458,7 +457,6 @@ function update_element_position(el, x, y, adjust) {
 					update_element_position(prev.points[1], 0, 0, 1);
 			}
 			const next = curves[el.curve + 1];
-			console.log(c.points.length, next ? next.points.length : "(no next)");
 			if (next) {
 				//There's no next on the end node.
 				next.x = x; next.y = y;
@@ -579,3 +577,24 @@ DOM("#canvasborder").addEventListener("wheel", e => {
 	}
 });
 //Can we get PS-style "hold space and move mouse to pan"?
+
+on("click", "#add_line,#add_curve", e => {
+	const last = curves[curves.length - 1];
+	const end = last.points[last.points.length - 1];
+	let prev;
+	if (last.points.length > 1) prev = last.points[last.points.length - 2];
+	else if (curves.length > 1) {
+		const c = curves[curves.length - 2];
+		prev = c.points[c.points.length - 1];
+	}
+	else prev = {x: end.x, y: end.y + 100}; //Otherwise, we're starting fresh. Move straight up, whatever.
+	const degree = e.match.id === "add_line" ? 1 : 3;
+	const angle = Math.atan2(end.y - prev.y, end.x - prev.x);
+	const dist = 150 / degree;
+	const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
+	const points = [];
+	for (let i = 1; i <= degree; ++i) points.push({x: end.x + dx * i, y: end.y + dy * i});
+	curves.push({degree, points});
+	rebuild_elements();
+	repaint();
+});
