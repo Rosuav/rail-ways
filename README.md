@@ -23,16 +23,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
     - Append end point end+dx*3, end+dy*3
   - Also: "add line". Exactly as above but zero control points.
 * Show direction of travel somewhere (maybe the Next marker needs an orientation?)
-* Automatic symmetry
-  - When you drag a point immediately before a Next node, also correspondingly move
-    the point immediately after the Next node, and vice versa.
-  - Level of symmetry: require colinear, require equidistant
-    - Default to both active. Experiment to see what happens if you change one.
-  - May help to have a polarize function to give r,theta from one point to another
-  - If both are active, don't bother polarizing, just mirror the x and y coords.
-  - What happens if you have ["next", "next", "control"]? (This would be a line
-    segment followed by a curve.) Lock the control point to colinearity?
-  - If you drag a "next", "start", or "end", move its adjacent control points too?
 * Import/export JSON
 * List (maybe drop-down) of all points
   - Show info about point when selected, and highlight it
