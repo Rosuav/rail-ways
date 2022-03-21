@@ -15,7 +15,7 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 * Pan/zoom (native size == image size)
 * Stroke width (in pixels)
 * Splines: multiple cubic Bezier curves, chained, all inline control points
-  - For the most part, don't assume cubic, but have a simple UI to "add curve"
+  - Have a simple UI to "add curve"
     - Measure delta-x, delta-y from point prior to "end" to "end" itself
     - Replace the current "end" with "next"
     - Append control point end+dx, end+dy
@@ -35,7 +35,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
     segment followed by a curve.) Lock the control point to colinearity?
   - If you drag a "next", "start", or "end", move its adjacent control points too?
 * Import/export JSON
-* Minimum curve radius per spline and overall
 * List (maybe drop-down) of all points
   - Show info about point when selected, and highlight it
   - Change selection in drop-down when point clicked on
