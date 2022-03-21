@@ -421,6 +421,7 @@ canvas.addEventListener("pointerdown", e => {
 	dragging = null;
 	let el = element_at_position(e.offsetX, e.offsetY, el => !el.fixed);
 	if (!el) return;
+	console.log("Dragging", el);
 	e.target.setPointerCapture(e.pointerId);
 	dragging = el; dragbasex = e.offsetX - el.x; dragbasey = e.offsetY - el.y;
 });
@@ -430,14 +431,36 @@ function update_element_position(el, x, y) {
 	[el.x, el.y] = [x, y];
 	//Update whatever else needs to be updated.
 	//1) If you dragged the endpoint of a curve, update the origin of the next curve.
-	if (el.type === "next" || el.type === "start") {
-		const c = curves[el.curve + 1];
-		c.x = x; c.y = y;
-	}
 	//2) If you drag the start, it magically starts at that point. This is a consequence
 	//of the "start curve" being a special case point, not actually a line.
-	if (el.type === "start") {
-		curves[0].x = x; curves[0].y = y;
+	//3) When you drag a connection point, also carry its adjacent control points.
+	switch (el.type) {
+		case "start": curves[0].x = x; curves[0].y = y; //Start node is a special case of continuation node (that loops back on itself)
+		case "end":
+		case "next": {
+			const c = curves[el.curve];
+			if (c.points.length > 1) {
+				//Carry the last control point of the current curve with this endpoint.
+				//If this is a line segment section, there'll only be the end point.
+				//Assuming that these are cubic curves, the final control point
+				//is the second control point. We could also identify it as the
+				//-2th point, but that's not as clean in JS anyway.
+				c.points[1].x += dx;
+				c.points[1].y += dy;
+			}
+			const next = curves[el.curve + 1];
+			if (next) {
+				//There's no next on the end node.
+				next.x = x; next.y = y;
+				if (next.points.length > 1) {
+					//Carry the first control point of the following curve too.
+					next.points[0].x += dx;
+					next.points[0].y += dy;
+				}
+			}
+			break;
+		}
+		default: break;
 	}
 	calc_min_curve_radius();
 	repaint();
