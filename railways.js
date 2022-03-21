@@ -204,34 +204,22 @@ function repaint() {
 	ctx.save();
 	//ctx.scale(scale, scale); //Is it better to do the scaling here or in CSS?
 	elements.forEach(el => el === dragging || draw_at(ctx, el));
-	//I don't think the HTML5 Canvas can do anything higher-order than cubic, so if we support that, we might
-	//have to replace all this with manual drawing anyway.
-	//Is it possible to subdivide a higher-order curve into segments and then approximate those with cubic curves??
-	//Otherwise, just subdivide into *very* short segments and approximate those with lines.
-	ctx.save();
-	const points = get_curve_points(1); //HACK
-	const path = new Path2D;
-	const method = {2: "lineTo", 3: "quadraticCurveTo", 4: "bezierCurveTo"}[points.length];
-	if (method) {
-		//Let the browser do the work for us.
+	curves.forEach((c, i) => {
+		ctx.save();
+		const points = get_curve_points(i);
+		const path = new Path2D;
+		const method = {2: "lineTo", 4: "bezierCurveTo"}[points.length];
+		//assert method
 		const coords = [];
 		points.forEach(p => coords.push(p.x, p.y));
 		path.moveTo(coords.shift(), coords.shift());
 		path[method](...coords);
-	}
-	else if (points.length < 2) return; //C'mon, at least give me both endpoints!!
-	else {
-		//It's higher order than cubic, so we'll approximate it with RESOLUTION line segments.
-		path.moveTo(points[0].x, points[0].y); //Start at the beginning...
-		for (let i = 1; i <= RESOLUTION; ++i) { //Go on till you reach the end...
-			const p = interpolate(points, i/RESOLUTION);
-			path.lineTo(p.x, p.y);
-		}
-		//... then, uhh, stop? I guess?
-	}
-	ctx.strokeStyle = "#000000";
-	ctx.stroke(path);
-	ctx.restore();
+		ctx.strokeStyle = "#000000";
+		//TODO: Stroke thickness
+		ctx.stroke(path);
+		ctx.restore();
+	});
+	const points = get_curve_points(1); //HACK
 	if (state.shownearest) {
 		//Highlight a point near to the mouse cursor
 		const t = highlight_t_value, curve_at_t = interpolate(points, highlight_t_value);
