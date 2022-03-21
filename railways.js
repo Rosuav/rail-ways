@@ -109,26 +109,6 @@ const element_types = {
 let highlight_curve = 0, highlight_t_value = 0.0;
 let tightest_curve = 0, minimum_curve_radius = 0.0;
 let animating = 0, animation_timer = null;
-on("click", "#toggle_animation", () => {
-	animating = !animating;
-	if (animating && !state.shownearest) DOM("[data-kwd=shownearest]").click(); //eh whatever
-	if (animating && !highlight_curve) {highlight_curve = 1; highlight_t_value = 0;}
-	if (animating) animation_timer = setInterval(() => {
-		highlight_t_value += animating / RESOLUTION;
-		if (highlight_t_value > 1.0) {
-			if (highlight_curve === curves.length - 1) {animating = -1; highlight_t_value = 2 - highlight_t_value;}
-			else {++highlight_curve; highlight_t_value -= 1.0;}
-		}
-		if (highlight_t_value < 0.0) {
-			//NOTE: We don't animate the start node, which is a single point and not very pretty.
-			if (highlight_curve < 1) highlight_curve = 1;
-			if (highlight_curve === 1) {animating = 1; highlight_t_value = 0 - highlight_t_value;}
-			else {--highlight_curve; highlight_t_value += 1.0;}
-		}
-		repaint();
-	}, 10);
-	else clearInterval(animation_timer);
-});
 
 const path_cache = { };
 function element_path(name) {
@@ -599,5 +579,27 @@ DOM("#canvasborder").addEventListener("wheel", e => {
 });
 //Can we get PS-style "hold space and move mouse to pan"?
 
-on("click", "#add_line", e => add_curve(1));
-on("click", "#add_curve", e => add_curve(3));
+set_content("#actions", [
+	["Animate", () => {
+		animating = !animating;
+		if (animating && !state.shownearest) DOM("[data-kwd=shownearest]").click(); //eh whatever
+		if (animating && !highlight_curve) {highlight_curve = 1; highlight_t_value = 0;}
+		if (animating) animation_timer = setInterval(() => {
+			highlight_t_value += animating / RESOLUTION;
+			if (highlight_t_value > 1.0) {
+				if (highlight_curve === curves.length - 1) {animating = -1; highlight_t_value = 2 - highlight_t_value;}
+				else {++highlight_curve; highlight_t_value -= 1.0;}
+			}
+			if (highlight_t_value < 0.0) {
+				//NOTE: We don't animate the start node, which is a single point and not very pretty.
+				if (highlight_curve < 1) highlight_curve = 1;
+				if (highlight_curve === 1) {animating = 1; highlight_t_value = 0 - highlight_t_value;}
+				else {--highlight_curve; highlight_t_value += 1.0;}
+			}
+			repaint();
+		}, 10);
+		else clearInterval(animation_timer);
+	}],
+	["Add line", () => add_curve(1)],
+	["Add curve", () => add_curve(3)],
+].map(a => BUTTON({onclick: a[1]}, a[0])));
