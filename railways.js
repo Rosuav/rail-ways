@@ -78,6 +78,27 @@ function rebuild_elements() {
 	elements = el;
 }
 rebuild_elements();
+
+function add_curve(degree) {
+	const last = curves[curves.length - 1];
+	const end = last.points[last.points.length - 1];
+	let prev;
+	if (last.points.length > 1) prev = last.points[last.points.length - 2];
+	else if (curves.length > 1) {
+		const c = curves[curves.length - 2];
+		prev = c.points[c.points.length - 1];
+	}
+	else prev = {x: end.x, y: end.y + 100}; //Otherwise, we're starting fresh. Move straight up, whatever.
+	const angle = Math.atan2(end.y - prev.y, end.x - prev.x);
+	const dist = 150 / degree;
+	const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
+	const points = [];
+	for (let i = 1; i <= degree; ++i) points.push({x: end.x + dx * i, y: end.y + dy * i});
+	curves.push({degree, points});
+	rebuild_elements();
+	repaint();
+}
+
 const element_types = {
 	start: {color: "#a0f0c080", radius: 6, crosshair: 9},
 	control: {color: "#66339980", radius: 6, crosshair: 9},
@@ -578,23 +599,5 @@ DOM("#canvasborder").addEventListener("wheel", e => {
 });
 //Can we get PS-style "hold space and move mouse to pan"?
 
-on("click", "#add_line,#add_curve", e => {
-	const last = curves[curves.length - 1];
-	const end = last.points[last.points.length - 1];
-	let prev;
-	if (last.points.length > 1) prev = last.points[last.points.length - 2];
-	else if (curves.length > 1) {
-		const c = curves[curves.length - 2];
-		prev = c.points[c.points.length - 1];
-	}
-	else prev = {x: end.x, y: end.y + 100}; //Otherwise, we're starting fresh. Move straight up, whatever.
-	const degree = e.match.id === "add_line" ? 1 : 3;
-	const angle = Math.atan2(end.y - prev.y, end.x - prev.x);
-	const dist = 150 / degree;
-	const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
-	const points = [];
-	for (let i = 1; i <= degree; ++i) points.push({x: end.x + dx * i, y: end.y + dy * i});
-	curves.push({degree, points});
-	rebuild_elements();
-	repaint();
-});
+on("click", "#add_line", e => add_curve(1));
+on("click", "#add_curve", e => add_curve(3));
