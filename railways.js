@@ -220,7 +220,9 @@ function curvature(curve, t) {
 const lerp_colors = ["#00000080", "#ee2222", "#11aa11", "#2222ee", "#ee22ee", "#aaaa11", "#11cccc"];
 let zoomlevel = 0, scale = 1;
 let translate_x = 0, translate_y = 0;
-window.reposition = (x,y) => {translate_x = x; translate_y = y; repaint();}; //Hack
+function window_to_virtual(x, y) {return [x / scale - translate_x, y / scale - translate_y];}
+function virtual_to_window(x, y) {return [(x+translate_x) * scale, (y+translate_y) * scale];}
+
 function repaint() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
@@ -461,7 +463,7 @@ canvas.addEventListener("pointerdown", e => {
 	if (e.button) return; //Only left clicks
 	e.preventDefault();
 	dragging = null;
-	const x = e.offsetX / scale, y = e.offsetY / scale;
+	const [x, y] = window_to_virtual(e.offsetX, e.offsetY);
 	let el = element_at_position(x, y, el => !el.fixed);
 	if (!el) return;
 	e.target.setPointerCapture(e.pointerId);
@@ -585,8 +587,13 @@ document.addEventListener("keydown", e => e.key === " " && [movemode(true), e.pr
 document.addEventListener("keyup", e => e.key === " " && [movemode(false), e.preventDefault()]);
 
 canvas.addEventListener("pointermove", e => {
-	const x = e.offsetX / scale, y = e.offsetY / scale;
-	last_pointer_x = x; last_pointer_y = y;
+	const [x, y] = window_to_virtual(e.offsetX, e.offsetY);
+	if (space_held) {
+		translate_x += x - last_pointer_x;
+		translate_y += y - last_pointer_y;
+		repaint();
+	}
+	else {last_pointer_x = x; last_pointer_y = y;} //If you're panning the map, your effective location isn't changing.
 	movemode(space_held); //Update mouse cursor
 	if (dragging) update_element_position(dragging, x - dragbasex, y - dragbasey);
 	if (state.shownearest && !animating) {
@@ -609,7 +616,7 @@ canvas.addEventListener("pointermove", e => {
 
 canvas.addEventListener("pointerup", e => {
 	if (!dragging) return;
-	const x = e.offsetX / scale, y = e.offsetY / scale;
+	const [x, y] = window_to_virtual(e.offsetX, e.offsetY);
 	e.target.releasePointerCapture(e.pointerId);
 	const el = dragging; dragging = null;
 	update_element_position(el, x - dragbasex, y - dragbasey);
