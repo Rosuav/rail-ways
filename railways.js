@@ -49,6 +49,11 @@ const option_configs = [{
 	dflt: "9",
 	attrs: {type: "number"},
 	paths: 1, repaint: 1,
+},{
+	kwd: "trackwidth", label: "Track width",
+	dflt: "1",
+	attrs: {type: "number"},
+	repaint: 1,
 }];
 set_content("#optlist", option_configs.map(opt => TR([
 	TD(LABEL({htmlFor: "opt-" + opt.kwd}, opt.label)),
@@ -265,7 +270,7 @@ function repaint() {
 		path.moveTo(coords.shift(), coords.shift());
 		path[method](...coords);
 		ctx.strokeStyle = "#000000";
-		//TODO: Stroke thickness
+		ctx.lineWidth = options.trackwidth;
 		ctx.stroke(path);
 		ctx.restore();
 	});

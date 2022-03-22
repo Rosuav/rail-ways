@@ -14,7 +14,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 * Upload background image
 * Pan/zoom (native size == image size)
 * Different colours for different types of markers
-* Stroke width (in pixels) for main spline
 * List (maybe drop-down) of all points
   - Show info about point when selected, and highlight it
   - Change selection in drop-down when point clicked on
