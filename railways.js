@@ -219,11 +219,13 @@ function curvature(curve, t) {
 
 const lerp_colors = ["#00000080", "#ee2222", "#11aa11", "#2222ee", "#ee22ee", "#aaaa11", "#11cccc"];
 let zoomlevel = 0, scale = 1;
-window.rescale = s => {scale = s; repaint();}; //Hack
+let translate_x = 0, translate_y = 0;
+window.reposition = (x,y) => {translate_x = x; translate_y = y; repaint();}; //Hack
 function repaint() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
 	ctx.scale(scale, scale);
+	ctx.translate(translate_x|0, translate_y|0);
 	elements.forEach(el => el === dragging || draw_at(ctx, el));
 	curves.forEach((c, i) => {
 		ctx.save();
