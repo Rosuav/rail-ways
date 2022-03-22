@@ -113,11 +113,16 @@ let tightest_curve = 0, minimum_curve_radius = 0.0;
 let animating = 0, animation_timer = null;
 
 const path_cache = { };
-function element_path(name) {
+function element_path(el) {
+	let name = el.type;
+	if (name === "image") name += el.img.naturalWidth + "x" + el.img.naturalHeight;
 	if (path_cache[name]) return path_cache[name];
 	const path = new Path2D;
-	if (name === "image") return path; //TODO: Generate a rectangular path at the natural width/height
-	const t = element_types[name] || { };
+	if (el.type === "image") {
+		path.rect(0, 0, el.img.naturalWidth, el.img.naturalHeight);
+		return path_cache[name] = path;
+	}
+	const t = element_types[el.type] || { };
 	path.arc(0, 0, t.radius || 5, 0, 2*Math.PI);
 	const crosshair_size = t.crosshair;
 	if (crosshair_size) {
@@ -135,8 +140,9 @@ function draw_at(ctx, el) {
 	if (el.type === "image") {
 		//Special case: an image has no path, just the IMG object
 		ctx.drawImage(el.img, el.x|0, el.y|0);
+		return;
 	}
-	const path = element_path(el.type);
+	const path = element_path(el);
 	ctx.save();
 	ctx.translate(el.x|0, el.y|0);
 	ctx.fillStyle = el.fillcolor || element_types[el.type]?.color || "#a0f0c080";
@@ -450,7 +456,7 @@ repaint();
 function element_at_position(x, y, filter) {
 	for (let el of elements) {
 		if (filter && !filter(el)) continue;
-		if (ctx.isPointInPath(element_path(el.type), x - el.x, y - el.y)) return el;
+		if (ctx.isPointInPath(element_path(el), x - el.x, y - el.y)) return el;
 	}
 }
 
