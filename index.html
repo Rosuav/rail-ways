@@ -42,7 +42,14 @@ beautiful, and an amazing showcase of what Bézier curves can do.</p>
 I guess you can't see my canvas?
 </canvas></div></div>
 <ul id=options></ul><div id=actions></div><p id=derivatives></p><p id=minimum_curve_radius></p>
+<dialog id=optionsdlg>
+<h3>Options</h3>
 <input id=uploadjson type=file accept="application/json,image/*" style="display: none">
+<p>Changes made here apply immediately, and are saved in the exported JSON<br>
+file. All dimensions are in pixels, relative to the background image.</p>
+<table id=optlist></table>
+<button type=button class=dialog_close>Close</button>
+</dialog>
 </main>
 </html>
 

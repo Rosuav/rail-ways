@@ -1,10 +1,11 @@
-import choc, {set_content, DOM, on} from "https://rosuav.github.io/shed/chocfactory.js";
-const {A, BUTTON, IMG, INPUT, LABEL, SPAN} = choc; //autoimport
+import choc, {set_content, DOM, on, fix_dialogs} from "https://rosuav.github.io/shed/chocfactory.js";
+const {A, BUTTON, IMG, INPUT, LABEL, SPAN, TD, TR} = choc; //autoimport
+fix_dialogs({close_selector: ".dialog_cancel,.dialog_close", click_outside: "formless"});
 
 const RESOLUTION = 256; //Spread this many points across the curve to do our calculations
 
-const state = { };
-const options = [
+const state = { }, options = { };
+const state_configs = [
 	{kwd: "allowdrag", lbl: "Allow drag", dflt: true},
 	{kwd: "shownearest", lbl: "Highlight a point", dflt: false},
 	{kwd: "shownearestlines", lbl: "... with lerp lines", dflt: false, depend: "shownearest"},
@@ -12,27 +13,34 @@ const options = [
 	{kwd: "shownearestcircle", lbl: "... and circle", dflt: false, depend: "shownearestvectors"},
 	{kwd: "showminimum", lbl: "Show tightest curve", dflt: false},
 ];
-set_content("#options", options.map(o => LABEL([INPUT({type: "checkbox", "data-kwd": o.kwd, checked: state[o.kwd] = o.dflt}), o.lbl])));
-const _optlookup = { };
-options.forEach(o => {_optlookup[o.kwd] = o; o.rdepend = []; if (o.depend) _optlookup[o.depend].rdepend.push(o.kwd);});
+set_content("#options", state_configs.map(o => LABEL([INPUT({type: "checkbox", "data-kwd": o.kwd, checked: state[o.kwd] = o.dflt}), o.lbl])));
+const _statelookup = { };
+state_configs.forEach(s => {_statelookup[s.kwd] = s; s.rdepend = []; if (s.depend) _statelookup[s.depend].rdepend.push(s.kwd);});
 on("click", "#options input", e => {
 	state[e.match.dataset.kwd] = e.match.checked;
 	if (e.match.checked) {
 		//Ensure that dependencies are also checked.
-		let o = _optlookup[e.match.dataset.kwd];
-		while (o.depend && !state[o.depend]) {
-			DOM("[data-kwd=" + o.depend + "]").checked = state[o.depend] = true;
-			o = _optlookup[o.depend];
+		let s = _statelookup[e.match.dataset.kwd];
+		while (s.depend && !state[s.depend]) {
+			DOM("[data-kwd=" + s.depend + "]").checked = state[s.depend] = true;
+			s = _statelookup[s.depend];
 		}
 	} else {
 		function cleartree(kwd) {
 			if (state[kwd]) DOM("[data-kwd=" + kwd + "]").checked = state[kwd] = false;
-			_optlookup[kwd].rdepend.forEach(cleartree);
+			_statelookup[kwd].rdepend.forEach(cleartree);
 		}
 		cleartree(e.match.dataset.kwd);
 	}
 	repaint();
 });
+const option_configs = [{
+	kwd: "filename", label: "File name:",
+	dflt: "railways-export.json",
+	attrs: {size: 20},
+//},{
+	//kwd: "
+}];
 
 const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
@@ -659,6 +667,7 @@ set_content("#actions", [
 	["Add curve", () => add_curve(3)],
 	["Export", () => {
 		const data = ["{\n",
+			'\t"options": ' + JSON.stringify({...options, filename: undefined}) + ",\n",
 			background_image ? '\t"background": ' + JSON.stringify(background_image) + ",\n" : "",
 			'\t"origin": ' + JSON.stringify([curves[0].points[0].x, curves[0].points[0].y]) + ",\n",
 			'\t"curves": [\n',
@@ -668,11 +677,12 @@ set_content("#actions", [
 		data.push("\t]\n}\n");
 		const blob = new Blob(data, {type: "application/json"});
 		const url = URL.createObjectURL(blob);
-		//TODO: Allow paths to have names, and then include the name in the export
-		A({href: url, download: "railways-export.json"}).click();
+		//If the user puts garbage in the field, the browser will sanitize it.
+		A({href: url, download: options.filename || "railways-export.json"}).click();
 		setTimeout(() => URL.revokeObjectURL(url), 60000); //Dispose of the blob after a minute - it should have finished by then
 	}],
 	["Import", () => DOM("#uploadjson").click()],
+	["Options", () => DOM("#optionsdlg").showModal()],
 ].map(a => BUTTON({onclick: a[1]}, a[0])));
 
 on("change", "#uploadjson", async e => {
@@ -681,6 +691,7 @@ on("change", "#uploadjson", async e => {
 			const r = new FileReader();
 			r.onload = e => {background_image = e.currentTarget.result; rebuild_elements(); repaint();};
 			r.readAsDataURL(f);
+			if (!DOM("#filename").value) DOM("#filename").value = f.name + ".json";
 			continue;
 		}
 		try {
@@ -698,8 +709,26 @@ on("change", "#uploadjson", async e => {
 			rebuild_elements();
 			calc_min_curve_radius();
 			repaint();
+			const opts = typeof data.options === "object" ? data.options : { };
+			opts.filename = f.name;
+			option_configs.forEach(o =>
+				DOM("#opt-" + o.kwd).value = options[o.kwd] = opts[o.kwd] || o.dflt || ""
+			);
 		}
 		catch (e) {console.warn("Unable to parse JSON import file"); console.warn(e);} //TODO: Report failure to user
 	}
 	DOM("#uploadjson").value = "";
+});
+
+set_content("#optlist", option_configs.map(opt => TR([
+	TD(LABEL({htmlFor: "opt-" + opt.kwd}, opt.label)),
+	TD([
+		INPUT({id: "opt-" + opt.kwd, value: options[opt.kwd] = opt.dflt || "", ...(opt.attrs||{})}),
+		" ", opt.comment || "",
+	]),
+])));
+
+on("change", "#optlist input", e => {
+	if (!e.match.id.startsWith("opt-")) return;
+	options[e.match.id.slice(4)] = e.match.value;
 });
