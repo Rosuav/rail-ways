@@ -24,4 +24,6 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
     - Lost point retrieval (sorry Anne, we're not sending you any control points)
 * If Ctrl is held and not dragging, change cursor to "move", and any drag moves
   the fundamental transform.
-* Scrolling changes the fundamental scale.
+* Scrolling needs to adjust transform as well as scroll
+* BUG: Dragging a node is only carrying one of the control points
+* Scaling of crosshairs?
