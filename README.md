@@ -23,6 +23,3 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
   - Have inputs for x/y position
     - Fine adjustment
     - Lost point retrieval (sorry Anne, we're not sending you any control points)
-* If Ctrl is held and not dragging, change cursor to "move", and any drag moves
-  the fundamental transform.
-* Scrolling needs to adjust transform as well as scroll
