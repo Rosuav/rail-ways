@@ -469,6 +469,7 @@ canvas.addEventListener("pointerdown", e => {
 	if (!el) return;
 	e.target.setPointerCapture(e.pointerId);
 	dragging = el; dragbasex = e.offsetX - el.x; dragbasey = e.offsetY - el.y;
+	canvas.style.cursor = "grabbing";
 });
 
 function update_element_position(el, x, y, adjust) {
@@ -576,10 +577,10 @@ function update_element_position(el, x, y, adjust) {
 canvas.addEventListener("pointermove", e => {
 	if (dragging) {
 		update_element_position(dragging, e.offsetX - dragbasex, e.offsetY - dragbasey);
-		canvas.style.cursor = "pointer";
+		canvas.style.cursor = "grabbing";
 	}
 	else if (element_at_position(e.offsetX, e.offsetY, el => !el.fixed))
-		canvas.style.cursor = "pointer";
+		canvas.style.cursor = "grab";
 	else canvas.style.cursor = null;
 	if (state.shownearest && !animating) {
 		let bestdist = -1;
@@ -604,6 +605,7 @@ canvas.addEventListener("pointerup", e => {
 	e.target.releasePointerCapture(e.pointerId);
 	const el = dragging; dragging = null;
 	update_element_position(el, e.offsetX - dragbasex, e.offsetY - dragbasey);
+	canvas.style.cursor = "grab"; //Assume that the cursor's still over a valid element
 });
 
 DOM("#canvasborder").addEventListener("wheel", e => {
