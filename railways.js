@@ -6,7 +6,7 @@
 Straight sections may be more trouble than they're worth. Maybe disallow??
 */
 import choc, {set_content, DOM, on} from "https://rosuav.github.io/shed/chocfactory.js";
-const {A, BUTTON, INPUT, LABEL, SPAN} = choc; //autoimport
+const {A, BUTTON, IMG, INPUT, LABEL, SPAN} = choc; //autoimport
 
 const RESOLUTION = 256; //Spread this many points across the curve to do our calculations
 
@@ -53,6 +53,7 @@ const curves = [
 let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
 function rebuild_elements() {
 	const el = [];
+	if (background_image) el.push({type: "image", x: 0, y: 0, img: IMG({src: background_image, onload: repaint}), fixed: true});
 	let x, y;
 	curves.forEach((c,i) => {
 		//assert c.degree === c.points.length
@@ -115,6 +116,7 @@ const path_cache = { };
 function element_path(name) {
 	if (path_cache[name]) return path_cache[name];
 	const path = new Path2D;
+	if (name === "image") return path; //TODO: Generate a rectangular path at the natural width/height
 	const t = element_types[name] || { };
 	path.arc(0, 0, t.radius || 5, 0, 2*Math.PI);
 	const crosshair_size = t.crosshair;
@@ -130,6 +132,10 @@ function element_path(name) {
 let dragging = null, dragbasex = 50, dragbasey = 10;
 
 function draw_at(ctx, el) {
+	if (el.type === "image") {
+		//Special case: an image has no path, just the IMG object
+		ctx.drawImage(el.img, el.x|0, el.y|0);
+	}
 	const path = element_path(el.type);
 	ctx.save();
 	ctx.translate(el.x|0, el.y|0);
@@ -653,7 +659,7 @@ on("change", "#uploadjson", async e => {
 	for (let f of e.match.files) {
 		if (f.type.startsWith("image/")) {
 			const r = new FileReader();
-			r.onload = e => background_image = e.currentTarget.result;
+			r.onload = e => {background_image = e.currentTarget.result; rebuild_elements(); repaint();};
 			r.readAsDataURL(f);
 			continue;
 		}
@@ -673,7 +679,7 @@ on("change", "#uploadjson", async e => {
 			calc_min_curve_radius();
 			repaint();
 		}
-		catch (e) { } //TODO: Report failure
+		catch (e) {console.warn("Unable to parse JSON import file"); console.warn(e);} //TODO: Report failure to user
 	}
 	DOM("#uploadjson").value = "";
 });
