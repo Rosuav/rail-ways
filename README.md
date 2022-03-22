@@ -25,5 +25,4 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 * If Ctrl is held and not dragging, change cursor to "move", and any drag moves
   the fundamental transform.
 * Scrolling needs to adjust transform as well as scroll
-* BUG: Dragging a node is only carrying one of the control points
 * Scaling of crosshairs?
