@@ -563,9 +563,11 @@ function update_element_position(el, x, y, adjust) {
 				el.x = origin.x + len * Math.cos(angle1);
 				el.y = origin.y + len * Math.sin(angle1);
 			}
-			else {
+			else if (!adjust) {
 				//We're dragging a control point opposite another curve. Follow the
 				//movement with the final control point of the other curve.
+				//Note that we do NOT do this if we're already a recursive call for
+				//adjustment after another movement.
 				const counterpart = other.points[0|!el.index];
 				counterpart.x = 2 * origin.x - el.x;
 				counterpart.y = 2 * origin.y - el.y;
