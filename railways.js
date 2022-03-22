@@ -576,15 +576,22 @@ function update_element_position(el, x, y, adjust) {
 	if (!adjust) {calc_min_curve_radius(); repaint();}
 }
 
+let space_held = false, last_pointer_x = 0, last_pointer_y = 0;
+function movemode(state) {
+	space_held = state;
+	canvas.style.cursor = space_held ? "move" :
+		dragging ? "grabbing" :
+		element_at_position(last_pointer_x, last_pointer_y, el => !el.fixed) ? "grab" :
+		null;
+}
+document.addEventListener("keydown", e => e.key === " " && [movemode(true), e.preventDefault()]);
+document.addEventListener("keyup", e => e.key === " " && [movemode(false), e.preventDefault()]);
+
 canvas.addEventListener("pointermove", e => {
 	const x = e.offsetX / scale, y = e.offsetY / scale;
-	if (dragging) {
-		update_element_position(dragging, x - dragbasex, y - dragbasey);
-		canvas.style.cursor = "grabbing";
-	}
-	else if (element_at_position(x, y, el => !el.fixed))
-		canvas.style.cursor = "grab";
-	else canvas.style.cursor = null;
+	last_pointer_x = x; last_pointer_y = y;
+	movemode(space_held); //Update mouse cursor
+	if (dragging) update_element_position(dragging, x - dragbasex, y - dragbasey);
 	if (state.shownearest && !animating) {
 		let bestdist = -1;
 		curves.forEach((c, i) => {
@@ -618,7 +625,6 @@ DOM("#canvasborder").addEventListener("wheel", e => {
 	scale = Math.exp(zoomlevel / 500); //Tweak the number 500 to adjust zoom scaling
 	repaint();
 });
-//Can we get PS-style "hold space and move mouse to pan"?
 
 set_content("#actions", [
 	["Animate", () => {
