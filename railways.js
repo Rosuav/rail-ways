@@ -34,13 +34,29 @@ on("click", "#options input", e => {
 	}
 	repaint();
 });
+
 const option_configs = [{
 	kwd: "filename", label: "File name:",
 	dflt: "railways-export.json",
 	attrs: {size: 20},
-//},{
-	//kwd: "
+},{
+	kwd: "radius", label: "Node size",
+	dflt: "6",
+	attrs: {type: "number"},
+	paths: 1, repaint: 1,
+},{
+	kwd: "crosshair", label: "Crosshair",
+	dflt: "9",
+	attrs: {type: "number"},
+	paths: 1, repaint: 1,
 }];
+set_content("#optlist", option_configs.map(opt => TR([
+	TD(LABEL({htmlFor: "opt-" + opt.kwd}, opt.label)),
+	TD([
+		INPUT({id: "opt-" + opt.kwd, value: options[opt.kwd] = opt.dflt || "", ...(opt.attrs||{})}),
+		" ", opt.comment || "",
+	]),
+])));
 
 const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
@@ -103,17 +119,17 @@ function add_curve(degree) {
 }
 
 const element_types = {
-	start: {color: "#a0f0c080", radius: 6, crosshair: 9},
-	control: {color: "#66339980", radius: 6, crosshair: 9},
-	end: {color: "#a0f0c080", radius: 6, crosshair: 9},
-	next: {color: "#a0f0c080", radius: 6, crosshair: 9},
+	start: {color: "#a0f0c080", radius: -1, crosshair: -1},
+	control: {color: "#66339980", radius: -1, crosshair: -1},
+	end: {color: "#a0f0c080", radius: -1, crosshair: -1},
+	next: {color: "#a0f0c080", radius: -1, crosshair: -1},
 	nearest: {color: "#aaaa2280", radius: 3.5, crosshair: 0},
 };
 let highlight_curve = 0, highlight_t_value = 0.0;
 let tightest_curve = 0, minimum_curve_radius = 0.0;
 let animating = 0, animation_timer = null;
 
-const path_cache = { };
+let path_cache = { };
 function element_path(el) {
 	let name = el.type;
 	if (name === "image") name += el.img.naturalWidth + "x" + el.img.naturalHeight;
@@ -124,13 +140,14 @@ function element_path(el) {
 		return path_cache[name] = path;
 	}
 	const t = element_types[el.type] || { };
-	path.arc(0, 0, t.radius || 5, 0, 2*Math.PI);
-	const crosshair_size = t.crosshair;
-	if (crosshair_size) {
-		path.moveTo(-crosshair_size, 0);
-		path.lineTo(crosshair_size, 0);
-		path.moveTo(0, -crosshair_size);
-		path.lineTo(0, crosshair_size);
+	let rad = t.radius || 5; if (rad === -1) rad = +options.radius;
+	let ch = t.crosshair; if (ch === -1) ch = +options.crosshair;
+	path.arc(0, 0, rad, 0, 2*Math.PI);
+	if (ch) {
+		path.moveTo(-ch, 0);
+		path.lineTo(ch, 0);
+		path.moveTo(0, -ch);
+		path.lineTo(0, ch);
 	}
 	path.closePath();
 	return path_cache[name] = path;
@@ -706,29 +723,26 @@ on("change", "#uploadjson", async e => {
 			});
 			if (typeof data.background === "string") background_image = data.background;
 			else background_image = null;
-			rebuild_elements();
-			calc_min_curve_radius();
-			repaint();
 			const opts = typeof data.options === "object" ? data.options : { };
 			opts.filename = f.name;
 			option_configs.forEach(o =>
 				DOM("#opt-" + o.kwd).value = options[o.kwd] = opts[o.kwd] || o.dflt || ""
 			);
+			path_cache = { };
+			rebuild_elements();
+			calc_min_curve_radius();
+			repaint();
 		}
 		catch (e) {console.warn("Unable to parse JSON import file"); console.warn(e);} //TODO: Report failure to user
 	}
 	DOM("#uploadjson").value = "";
 });
 
-set_content("#optlist", option_configs.map(opt => TR([
-	TD(LABEL({htmlFor: "opt-" + opt.kwd}, opt.label)),
-	TD([
-		INPUT({id: "opt-" + opt.kwd, value: options[opt.kwd] = opt.dflt || "", ...(opt.attrs||{})}),
-		" ", opt.comment || "",
-	]),
-])));
-
 on("change", "#optlist input", e => {
-	if (!e.match.id.startsWith("opt-")) return;
-	options[e.match.id.slice(4)] = e.match.value;
+	const opt = option_configs.find(o => e.match.id === "opt-" + o.kwd);
+	if (!opt) return;
+	options[opt.kwd] = e.match.value;
+	if (opt.paths) path_cache = { };
+	if (opt.elements) rebuild_elements();
+	if (opt.repaint) repaint();
 });
