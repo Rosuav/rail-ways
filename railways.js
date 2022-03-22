@@ -225,11 +225,12 @@ function curvature(curve, t) {
 }
 
 const lerp_colors = ["#00000080", "#ee2222", "#11aa11", "#2222ee", "#ee22ee", "#aaaa11", "#11cccc"];
-let zoomlevel = 0, scale = 1.0;
+let zoomlevel = 0, scale = 1;
+window.rescale = s => {scale = s; repaint();}; //Hack
 function repaint() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
-	//ctx.scale(scale, scale); //Is it better to do the scaling here or in CSS?
+	ctx.scale(scale, scale);
 	elements.forEach(el => el === dragging || draw_at(ctx, el));
 	curves.forEach((c, i) => {
 		ctx.save();
@@ -465,10 +466,11 @@ canvas.addEventListener("pointerdown", e => {
 	if (e.button) return; //Only left clicks
 	e.preventDefault();
 	dragging = null;
-	let el = element_at_position(e.offsetX, e.offsetY, el => !el.fixed);
+	const x = e.offsetX / scale, y = e.offsetY / scale;
+	let el = element_at_position(x, y, el => !el.fixed);
 	if (!el) return;
 	e.target.setPointerCapture(e.pointerId);
-	dragging = el; dragbasex = e.offsetX - el.x; dragbasey = e.offsetY - el.y;
+	dragging = el; dragbasex = x - el.x; dragbasey = y - el.y;
 	canvas.style.cursor = "grabbing";
 });
 
@@ -575,11 +577,12 @@ function update_element_position(el, x, y, adjust) {
 }
 
 canvas.addEventListener("pointermove", e => {
+	const x = e.offsetX / scale, y = e.offsetY / scale;
 	if (dragging) {
-		update_element_position(dragging, e.offsetX - dragbasex, e.offsetY - dragbasey);
+		update_element_position(dragging, x - dragbasex, y - dragbasey);
 		canvas.style.cursor = "grabbing";
 	}
-	else if (element_at_position(e.offsetX, e.offsetY, el => !el.fixed))
+	else if (element_at_position(x, y, el => !el.fixed))
 		canvas.style.cursor = "grab";
 	else canvas.style.cursor = null;
 	if (state.shownearest && !animating) {
@@ -588,7 +591,7 @@ canvas.addEventListener("pointermove", e => {
 			const points = get_curve_points(i);
 			for (let t = 0; t <= 1; t += 1/RESOLUTION) {
 				const p = interpolate(points, t);
-				const dist = (p.x - e.offsetX) ** 2 + (p.y - e.offsetY) ** 2;
+				const dist = (p.x - x) ** 2 + (p.y - y) ** 2;
 				if (bestdist < 0 || dist < bestdist) {
 					bestdist = dist;
 					highlight_curve = i;
@@ -602,23 +605,18 @@ canvas.addEventListener("pointermove", e => {
 
 canvas.addEventListener("pointerup", e => {
 	if (!dragging) return;
+	const x = e.offsetX / scale, y = e.offsetY / scale;
 	e.target.releasePointerCapture(e.pointerId);
 	const el = dragging; dragging = null;
-	update_element_position(el, e.offsetX - dragbasex, e.offsetY - dragbasey);
+	update_element_position(el, x - dragbasex, y - dragbasey);
 	canvas.style.cursor = "grab"; //Assume that the cursor's still over a valid element
 });
 
 DOM("#canvasborder").addEventListener("wheel", e => {
-	//console.log(e);
-	if (e.ctrlKey || e.shiftKey) {
-		e.preventDefault();
-		if (e.shiftKey) zoomlevel += e.wheelDelta / 5; //Ctrl-Shift (or just Shift) for finer scroll zoom
-		else zoomlevel += e.wheelDelta;
-		const scale = Math.exp(zoomlevel / 500); //Tweak the number 500 to adjust zoom scaling
-		//NOTE: This is sometimes leaving scroll bars even when the scale is set to 1. Not sure why.
-		//Fiddling with the zoom level can remove them again. It's weird.
-		canvas.style.transform = "scale(" + scale + ")";
-	}
+	e.preventDefault();
+	zoomlevel += e.wheelDelta;
+	scale = Math.exp(zoomlevel / 500); //Tweak the number 500 to adjust zoom scaling
+	repaint();
 });
 //Can we get PS-style "hold space and move mouse to pan"?
 
