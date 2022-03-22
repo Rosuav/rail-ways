@@ -43,6 +43,7 @@ on("click", "#options input", e => {
 
 const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
+let background_image = null;
 const curves = [
 	{degree: 1, points: [{x: 500, y: 400}]},
 	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
@@ -632,12 +633,13 @@ set_content("#actions", [
 	["Add curve", () => add_curve(3)],
 	["Export", () => {
 		const data = ["{\n",
+			background_image ? '\t"background": ' + JSON.stringify(background_image) + ",\n" : "",
 			'\t"origin": ' + JSON.stringify([curves[0].points[0].x, curves[0].points[0].y]) + ",\n",
 			'\t"curves": [\n',
 		];
 		curves.forEach((c,i) => i && data.push("\t\t" + JSON.stringify(c.points.map(p => [p.x, p.y])) + ",\n"));
 		data[data.length - 1] = data[data.length - 1].replace(",\n", "\n"); //Remove the comma from the last one, because JSON
-		data.push("\t]\n", "}\n");
+		data.push("\t]\n}\n");
 		const blob = new Blob(data, {type: "application/json"});
 		const url = URL.createObjectURL(blob);
 		//TODO: Allow paths to have names, and then include the name in the export
@@ -649,6 +651,12 @@ set_content("#actions", [
 
 on("change", "#uploadjson", async e => {
 	for (let f of e.match.files) {
+		if (f.type.startsWith("image/")) {
+			const r = new FileReader();
+			r.onload = e => background_image = e.currentTarget.result;
+			r.readAsDataURL(f);
+			continue;
+		}
 		try {
 			const data = JSON.parse(await f.text());
 			if (typeof data !== "object" || !Array.isArray(data.origin) || !Array.isArray(data.curves)) continue;
@@ -659,12 +667,13 @@ on("change", "#uploadjson", async e => {
 				if (!Array.isArray(c) || (c.length !== 1 && c.length !== 3)) return;
 				curves.push({degree: c.length, points: c.map(p => ({x: p[0], y: p[1]}))});
 			});
+			if (typeof data.background === "string") background_image = data.background;
+			else background_image = null;
 			rebuild_elements();
 			calc_min_curve_radius();
 			repaint();
-			break;
 		}
-		catch (e) { } //TODO: If all files fail, report failure (there'll usually only be one anyway)
+		catch (e) { } //TODO: Report failure
 	}
 	DOM("#uploadjson").value = "";
 });
