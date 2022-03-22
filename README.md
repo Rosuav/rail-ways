@@ -13,8 +13,9 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 
 * Upload background image
 * Pan/zoom (native size == image size)
-* Stroke width (in pixels)
-* Show direction of travel somewhere (maybe the Next marker needs an orientation?)
+* Different colours for different types of markers
+* Scaling of crosshairs?
+* Stroke width (in pixels) for main spline
 * List (maybe drop-down) of all points
   - Show info about point when selected, and highlight it
   - Change selection in drop-down when point clicked on
@@ -25,4 +26,3 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 * If Ctrl is held and not dragging, change cursor to "move", and any drag moves
   the fundamental transform.
 * Scrolling needs to adjust transform as well as scroll
-* Scaling of crosshairs?
