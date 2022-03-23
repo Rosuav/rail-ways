@@ -7,6 +7,7 @@ const RESOLUTION = 256; //Spread this many points across the curve to do our cal
 const state = { }, options = { };
 const state_configs = [
 	{kwd: "allowdrag", lbl: "Allow drag", dflt: true, title: "Allow nodes to be dragged around. Disable for protection."},
+	{kwd: "pananywhere", lbl: "Pan w/o spacebar", dflt: false, title: "If unchecked, hold Space and drag to move the view."},
 	{kwd: "shownearest", lbl: "Highlight a point", dflt: false, title: "Mark a point, either by mouse or by animation"},
 	{kwd: "shownearestlines", lbl: "... with lerp lines", dflt: false, depend: "shownearest", title: "Show the construction lines to the highlighted point"},
 	{kwd: "shownearestvectors", lbl: "... with vectors", dflt: false, depend: "shownearest", title: "Show speed, acceleration, and jerk at the highlighted point"},
@@ -612,11 +613,12 @@ function update_element_position(el, x, y, adjust) {
 }
 
 let space_held = false, last_pointer_x = 0, last_pointer_y = 0;
-function movemode(state) {
-	space_held = state;
+function movemode(nowheld) {
+	space_held = nowheld;
 	canvas.style.cursor = space_held ? "move" :
 		dragging ? "grabbing" :
-		element_at_position(last_pointer_x, last_pointer_y, el => !el.fixed) ? "grab" :
+		state.allowdrag && element_at_position(last_pointer_x, last_pointer_y, el => !el.fixed) ? "grab" :
+		state.pananywhere ? "move" : //TODO: Only show this cursor if a mouse button is held down?
 		null;
 }
 document.addEventListener("keydown", e => e.key === " " && [movemode(true), e.preventDefault()]);
@@ -624,7 +626,7 @@ document.addEventListener("keyup", e => e.key === " " && [movemode(false), e.pre
 
 canvas.addEventListener("pointermove", e => {
 	const [x, y] = window_to_virtual(e.offsetX, e.offsetY);
-	if (space_held) {
+	if (space_held || (state.pananywhere && !dragging && e.buttons)) {
 		translate_x += x - last_pointer_x;
 		translate_y += y - last_pointer_y;
 		repaint();
