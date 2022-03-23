@@ -6,14 +6,17 @@ const RESOLUTION = 256; //Spread this many points across the curve to do our cal
 
 const state = { }, options = { };
 const state_configs = [
-	{kwd: "allowdrag", lbl: "Allow drag", dflt: true},
-	{kwd: "shownearest", lbl: "Highlight a point", dflt: false},
-	{kwd: "shownearestlines", lbl: "... with lerp lines", dflt: false, depend: "shownearest"},
-	{kwd: "shownearestvectors", lbl: "... with vectors", dflt: false, depend: "shownearest"},
-	{kwd: "shownearestcircle", lbl: "... and circle", dflt: false, depend: "shownearestvectors"},
-	{kwd: "showminimum", lbl: "Show tightest curve", dflt: false},
+	{kwd: "allowdrag", lbl: "Allow drag", dflt: true, title: "Allow nodes to be dragged around. Disable for protection."},
+	{kwd: "shownearest", lbl: "Highlight a point", dflt: false, title: "Mark a point, either by mouse or by animation"},
+	{kwd: "shownearestlines", lbl: "... with lerp lines", dflt: false, depend: "shownearest", title: "Show the construction lines to the highlighted point"},
+	{kwd: "shownearestvectors", lbl: "... with vectors", dflt: false, depend: "shownearest", title: "Show speed, acceleration, and jerk at the highlighted point"},
+	{kwd: "shownearestcircle", lbl: "... and circle", dflt: false, depend: "shownearestvectors", title: "Show osculating circle at the highlighted point"},
+	{kwd: "showminimum", lbl: "Show tightest curve", dflt: false, title: "Show osculating circle at the point where it's the tightest"},
 ];
-set_content("#options", state_configs.map(o => LABEL([INPUT({type: "checkbox", "data-kwd": o.kwd, checked: state[o.kwd] = o.dflt}), o.lbl])));
+set_content("#options", state_configs.map(o => LABEL({title: o.title}, [
+	INPUT({type: "checkbox", "data-kwd": o.kwd, checked: state[o.kwd] = o.dflt}),
+	o.lbl,
+])));
 const _statelookup = { };
 state_configs.forEach(s => {_statelookup[s.kwd] = s; s.rdepend = []; if (s.depend) _statelookup[s.depend].rdepend.push(s.kwd);});
 on("click", "#options input", e => {
