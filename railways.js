@@ -261,6 +261,7 @@ function window_to_virtual(x, y) {return [x / scale - translate_x, y / scale - t
 function virtual_to_window(x, y) {return [(x+translate_x) * scale, (y+translate_y) * scale];}
 
 function repaint() {
+	canvas.height = canvas.offsetHeight; canvas.width = canvas.offsetWidth;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
 	ctx.scale(scale, scale);
@@ -758,4 +759,9 @@ on("change", "#optlist input", e => {
 	if (opt.paths) path_cache = { };
 	if (opt.elements) rebuild_elements();
 	if (opt.repaint) repaint();
+});
+
+on("click", "#fullscreen", e => {
+	if (document.fullscreenElement) document.exitFullscreen().then(repaint);
+	else DOM("#canvasborder").requestFullscreen().then(repaint);
 });

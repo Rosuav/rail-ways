@@ -10,14 +10,12 @@ main {
 	margin: auto;
 	padding: 5px;
 }
-.scrollcontext {
-	overflow: auto;
-	max-height: 615px; /* Why this figure? Is that the height of the scroll bar? */
-	border: 1px solid black;
-}
 #canvasborder {
+	border: 1px solid black;
 	width: 900px; height: 600px;
 	margin: 0; padding: 0;
+	position: relative;
+	background: white;
 }
 #options {
 	display: flex;
@@ -30,6 +28,13 @@ main {
 	column-gap: 10px;
 }
 input[type=number] {width: 4em;}
+#fullscreen {
+	position: absolute;
+	right: 0; bottom: 0;
+	width: 20px; height: 20px;
+	padding: 0;
+	line-height: 100%;
+}
 </style>
 <script type=module src="railways.js"></script>
 </head>
@@ -39,9 +44,9 @@ input[type=number] {width: 4em;}
 <p>Inspired partly by <a href="https://www.youtube.com/watch?v=aVwxzDHniEw">this video by Freya Holmér</a>. If you want to know the
 mathematics behind all this, watch that video; even if you don't, do yourself a favour and watch the opening minute - it is incredibly
 beautiful, and an amazing showcase of what Bézier curves can do.</p>
-<div class=scrollcontext><div id=canvasborder><canvas width=900 height=600>
+<div id=canvasborder><canvas width=900 height=600>
 I guess you can't see my canvas?
-</canvas></div></div>
+</canvas><button id=fullscreen>⛶</button></div>
 <ul id=options></ul><div id=actions></div><p id=derivatives></p><p id=minimum_curve_radius></p>
 <dialog id=optionsdlg>
 <h3>Options</h3>
