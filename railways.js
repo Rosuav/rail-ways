@@ -113,9 +113,12 @@ function add_curve(degree) {
 		prev = c.points[c.points.length - 1];
 	}
 	else prev = {x: end.x, y: end.y + 100}; //Otherwise, we're starting fresh. Move straight up, whatever.
-	const angle = Math.atan2(end.y - prev.y, end.x - prev.x);
-	const dist = 150 / degree;
-	const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
+	//To keep the angle but limit the length:
+	//const angle = Math.atan2(end.y - prev.y, end.x - prev.x);
+	//const dist = 150 / degree;
+	//const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
+	//Or to just go with mirrored length:
+	const dx = end.x - prev.x, dy = end.y - prev.y;
 	const points = [];
 	for (let i = 1; i <= degree; ++i) points.push({x: end.x + dx * i, y: end.y + dy * i});
 	curves.push({degree, points});
