@@ -17,6 +17,7 @@ main {
 	position: relative;
 	background: white;
 }
+canvas {width: 100%; height: 100%;}
 #options {
 	display: flex;
 	padding: 0;
@@ -44,7 +45,7 @@ input[type=number] {width: 4em;}
 <p>Inspired partly by <a href="https://www.youtube.com/watch?v=aVwxzDHniEw">this video by Freya Holmér</a>. If you want to know the
 mathematics behind all this, watch that video; even if you don't, do yourself a favour and watch the opening minute - it is incredibly
 beautiful, and an amazing showcase of what Bézier curves can do.</p>
-<div id=canvasborder><canvas width=900 height=600>
+<div id=canvasborder><canvas>
 I guess you can't see my canvas?
 </canvas><button id=fullscreen>⛶</button></div>
 <ul id=options></ul><div id=actions></div><p id=derivatives></p><p id=minimum_curve_radius></p>
