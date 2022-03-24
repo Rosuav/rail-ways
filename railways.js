@@ -1,5 +1,5 @@
 import choc, {set_content, DOM, on, fix_dialogs} from "https://rosuav.github.io/shed/chocfactory.js";
-const {A, BUTTON, IMG, INPUT, LABEL, SPAN, TD, TR} = choc; //autoimport
+const {A, BUTTON, IMG, INPUT, LABEL, SCRIPT, SPAN, TD, TR} = choc; //autoimport
 fix_dialogs({close_selector: ".dialog_cancel,.dialog_close", click_outside: "formless"});
 
 const RESOLUTION = 256; //Spread this many points across the curve to do our calculations
@@ -765,3 +765,14 @@ on("click", "#fullscreen", e => {
 	if (document.fullscreenElement) document.exitFullscreen().then(repaint);
 	else DOM("#canvasborder").requestFullscreen().then(repaint);
 });
+/*
+window.init_map = () => {
+	const map = new google.maps.Map(DOM("#map"), {
+		zoom: 20,
+		center: new google.maps.LatLng(-37.8136, 144.9631),
+		disableDefaultUI: true,
+	});
+};
+//const key = ""; //Provide me.
+document.head.appendChild(SCRIPT({src: "https://maps.googleapis.com/maps/api/js?key=" + key + "&callback=init_map"}));
+// */
