@@ -477,13 +477,37 @@ function find_min_curve_radius(points) {
 function calc_min_curve_radius() {
 	let tightest = 0;
 	curves.forEach((c, i) => {
-		if (c.points.length === 1) return;
-		const [k, t] = find_min_curve_radius(get_curve_points(i));
+		//TODO: Have a "dirty" flag on a curve, and don't do these recalculations
+		//if the curve hasn't changed.
+		if (c.points.length === 1) {
+			c.curve_length = Math.sqrt((c.points[0].x - c.x) ** 2 + (c.points[0].y - c.y) ** 2);
+			return;
+		}
+		const points = get_curve_points(i);
+		const [k, t] = find_min_curve_radius(points);
 		if (k > tightest) {
 			tightest_curve = i;
 			minimum_curve_radius = t;
 			tightest = k;
 		}
+		//While we're at it, let's get some point samples so we can animate more smoothly.
+		//Step 1: Sample the curve at some t-values and estimate curve length by line distance.
+		let dist = 0, last_point = points[0];
+		const curve_length = [];
+		const probe_span = 8/RESOLUTION;
+		for (let t = probe_span; t <= 1; t += probe_span) {
+			const p = interpolate(points, t);
+			dist += Math.sqrt((p.x - last_point.x) ** 2 + (p.y - last_point.y) ** 2);
+			curve_length.push(dist);
+			last_point = p;
+		}
+		c.curve_length = dist;
+		//Step 2: Pick some equidistant length points and linearly interpolate within those
+		//t-values to find some useful reference points. It's not going to be perfect - in fact,
+		//it's inaccurate on two levels - but hopefully, with good enough resolution, it can
+		//be accurate enough to make the animation look smooth.
+		//TODO: Figure out a pixels-per-second animation speed, then measure points to make that
+		//possible. The actual animation loop will still interpolate within there.
 	});
 }
 calc_min_curve_radius();
