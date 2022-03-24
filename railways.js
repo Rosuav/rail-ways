@@ -664,7 +664,7 @@ canvas.addEventListener("pointerup", e => {
 
 DOM("#canvasborder").addEventListener("wheel", e => {
 	e.preventDefault();
-	zoomlevel += e.wheelDelta;
+	zoomlevel = Math.min(Math.max(zoomlevel + e.wheelDelta, -2000), 2000);
 	const [x1, y1] = window_to_virtual(e.offsetX, e.offsetY);
 	scale = Math.exp(zoomlevel / 500); //Tweak the number 500 to adjust zoom scaling
 	const [x2, y2] = window_to_virtual(e.offsetX, e.offsetY);
