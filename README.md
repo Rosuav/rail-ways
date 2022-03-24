@@ -21,3 +21,4 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
   - Have inputs for x/y position
     - Fine adjustment
     - Lost point retrieval (sorry Anne, we're not sending you any control points)
+* Is there anything that requires integers? If not, replace all |0 with ||0.
