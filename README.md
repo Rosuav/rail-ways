@@ -11,14 +11,16 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
 
 ## TODO
 
-* Upload background image
-* Pan/zoom (native size == image size)
+* Export/import of GMaps configs
+* Make GMaps optional - if not activated, use bg image only
+* Customize GMaps origin?? What happens if you change it?
 * Different colours for different types of markers
 * List (maybe drop-down) of all points
   - Show info about point when selected, and highlight it
   - Change selection in drop-down when point clicked on
     - Disallow movement less than 5px
   - Have inputs for x/y position
-    - Fine adjustment
+    - Fine adjustment - necessary? Or just zoom further in?
     - Lost point retrieval (sorry Anne, we're not sending you any control points)
+      - Less needed with good panning, they'll never truly be lost
 * Is there anything that requires integers? If not, replace all |0 with ||0.
