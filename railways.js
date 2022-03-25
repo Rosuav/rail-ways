@@ -70,11 +70,20 @@ set_content("#optlist", option_configs.map(opt => TR([
 const canvas = DOM("canvas");
 const ctx = canvas.getContext('2d');
 let background_image = null;
+//Google Maps origin information represents where our (0,0) lies at scale == 1
+let google_map = null, gmap_lat = -37.89, gmap_lng = 145.0365, gmap_zoom = 15.5;
+let gmap_lat_per_pixel = 0, gmap_lng_per_pixel = 0;
 const curves = [
-	{degree: 1, points: [{x: 500, y: 400}]},
+/*	{degree: 1, points: [{x: 500, y: 400}]},
 	{degree: 3, points: [{x: 600, y: 500}, {x: 450, y: 550}, {x: 450, y: 500}]},
 	{degree: 1, points: [{x: 450, y: 450}]},
-	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},
+	{degree: 3, points: [{x: 450, y: 200}, {x: 50, y: 400}, {x: 50, y: 50}]},*/
+	//Sample curves drawing around a couple of fields in Oakleigh
+	{points: [{x: 725.5720959650533, y:499.88724884356253}]},
+	{points: [{x: 674.9609801260359, y:509.91442590672},{x:669.4337896124417,y:462.1979882581519},{x:709.73055809553,y:460.438558488099}]},
+	{points: [{x: 750.0273265786183, y:458.67912871804606},{x:741.7460607406806,y:435.1961950315216},{x:767.2450572709491,y:442.77939871391413}]},
+	{points: [{x: 792.7440538012177, y:450.36260239630667},{x:787.2445101140097,y:488.9386291076728},{x:769.120008597086,y:492.37279666824475}]},
+	{points: [{x: 750.9955070801623, y:495.8069642288167},{x:761.4663352455887,y:495.30935270694806},{x:737.4546800716475,y:477.50254041722786}]},
 ];
 let elements = []; //Flattening of all point objects curves[*].points[*], and others if clickable
 function rebuild_elements() {
@@ -262,7 +271,16 @@ function virtual_to_window(x, y) {return [(x+translate_x) * scale, (y+translate_
 
 function repaint() {
 	canvas.height = canvas.offsetHeight; canvas.width = canvas.offsetWidth;
+	//Adjust the underlying map to be centered on our centerpoint
+	if (google_map) {
+		const [ctrx, ctry] = window_to_virtual(canvas.width / 2, canvas.height / 2);
+		google_map.setCenter({
+			lat: gmap_lat - gmap_lat_per_pixel * ctry,
+			lng: gmap_lng + gmap_lng_per_pixel * ctrx,
+		});
+	}
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.lineWidth = options.trackwidth;
 	ctx.save();
 	ctx.scale(scale, scale);
 	ctx.translate(translate_x|0, translate_y|0);
@@ -694,6 +712,7 @@ DOM("#canvasborder").addEventListener("wheel", e => {
 	const [x2, y2] = window_to_virtual(e.offsetX, e.offsetY);
 	//Adjust the transform so that the point under the cursor hasn't moved.
 	translate_x += x2 - x1; translate_y += y2 - y1;
+	if (google_map) google_map.setZoom(gmap_zoom + Math.log2(scale));
 	repaint();
 });
 
@@ -789,14 +808,29 @@ on("click", "#fullscreen", e => {
 	if (document.fullscreenElement) document.exitFullscreen().then(repaint);
 	else DOM("#canvasborder").requestFullscreen().then(repaint);
 });
-/*
+
 window.init_map = () => {
-	const map = new google.maps.Map(DOM("#map"), {
-		zoom: 20,
-		center: new google.maps.LatLng(-37.8136, 144.9631),
+	google_map = new google.maps.Map(DOM("#map"), {
+		zoom: 15.5,
+		mapTypeId: "satellite",
 		disableDefaultUI: true,
+		isFractionalZoomEnabled: true,
 	});
+	google_map.addListener("bounds_changed", () => {
+		const span = google_map.getBounds().toSpan();
+		const div = google_map.getDiv();
+		const lng = span.lng() / div.offsetWidth;
+		const lat = span.lat() / div.offsetHeight;
+		//~ if (lng !== gmap_lng_per_pixel || lat !== gmap_lat_per_pixel) { //Recalculate every time
+		if (!gmap_lng_per_pixel) { //Just calculate once
+			gmap_lng_per_pixel = lng;
+			gmap_lat_per_pixel = lat;
+			repaint();
+		}
+	});
+	window.map = google_map; //Hack for analysis
+	repaint();
 };
-//const key = ""; //Provide me.
-document.head.appendChild(SCRIPT({src: "https://maps.googleapis.com/maps/api/js?key=" + key + "&callback=init_map"}));
-// */
+const key = location.host === "rosuav.github.io" ? "AIzaSyCISseiStc59FATrS0AuZWRkk1_Nm5yyuI" //Prod (restricted to rosuav.github.io)
+	: "AIzaSyAgf_KXIRUai0qvZNH5E_gpTaAe6Bjdcdc"; //Test (restricted to my IP address)
+document.head.appendChild(SCRIPT({src: "https://maps.googleapis.com/maps/api/js?v=beta&key=" + key + "&callback=init_map"}));
