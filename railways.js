@@ -45,12 +45,12 @@ const option_configs = [{
 	attrs: {size: 20},
 },{
 	kwd: "radius", label: "Node size",
-	dflt: "6",
+	dflt: "3",
 	attrs: {type: "number"},
 	paths: 1, repaint: 1,
 },{
 	kwd: "crosshair", label: "Crosshair",
-	dflt: "9",
+	dflt: "3",
 	attrs: {type: "number"},
 	paths: 1, repaint: 1,
 },{
@@ -295,7 +295,7 @@ function repaint() {
 		points.forEach(p => coords.push(p.x, p.y));
 		path.moveTo(coords.shift(), coords.shift());
 		path[method](...coords);
-		ctx.strokeStyle = "#000000";
+		ctx.strokeStyle = "#ff0";
 		ctx.lineWidth = options.trackwidth;
 		ctx.stroke(path);
 		ctx.restore();
@@ -352,7 +352,7 @@ function repaint() {
 				};
 				path.lineTo(arrow.x, arrow.y);
 				const ARROW_ANGLE = 2.6; //Radians. If the primary vector is pointing on the X axis, the arrowhead lines point this many radians positive and negative.
-				const ARROW_LENGTH = 12;
+				const ARROW_LENGTH = options.crosshair * 2;
 				for (let i = -1; i <= 1; i += 2) {
 					path.lineTo(
 						arrow.x + Math.cos(vector.angle + ARROW_ANGLE * i) * ARROW_LENGTH,
@@ -811,7 +811,7 @@ on("click", "#fullscreen", e => {
 
 window.init_map = () => {
 	google_map = new google.maps.Map(DOM("#map"), {
-		zoom: 15.5,
+		zoom: gmap_zoom,
 		mapTypeId: "satellite",
 		disableDefaultUI: true,
 		isFractionalZoomEnabled: true,

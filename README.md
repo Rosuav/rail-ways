@@ -24,3 +24,5 @@ Formerly at https://rosuav.github.io/shed/bezier.html - see there for old histor
     - Lost point retrieval (sorry Anne, we're not sending you any control points)
       - Less needed with good panning, they'll never truly be lost
 * Is there anything that requires integers? If not, replace all |0 with ||0.
+* Zooming while anmating breaks things. Possibly a repaint too soon causes
+  something to reset??
